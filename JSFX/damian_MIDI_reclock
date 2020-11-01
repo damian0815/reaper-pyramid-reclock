@@ -1,0 +1,313 @@
+/**
+ * JSFX Name: MIDI Timing Re-Clock
+ * Description: 
+ * Screenshot:
+ * Author: 
+ * Author URI: 
+ * Links:
+     Forum Thread
+ * Donation: 
+ * Licence: GPL v3
+ * REAPER: 5.0
+ * Extensions: None
+ * Version: 1.0
+ */
+
+/**
+ * Changelog:
+ * v1.0 (2016-09-03)
+  + Initial Release
+ */
+
+desc:MIDI Timing Re-Clock
+
+slider1:0<1,150,1>Bar
+slider2:0<1,8,1>Beat
+slider3:4<0,6,1{60,120,240,480,960,1920,3840,7680}>Accuracy
+
+////////////////////////////////////////////////////////////////////////////////
+@init
+ext_noinit=1; // do not reset on play
+statClock = 248;
+statStart = 250;
+statContinue = 251;
+statStop = 252;
+statSPP = 242;
+SPPTicksPerBeat = 24;
+prevTimingTickDelta = -1;
+ttiMean = 0;
+ttiMean_Seconds = 0;
+ttiAccumulator = 0;
+timingTickCount = 0;
+timingTickAccumulatorSize = 1920;
+estimatedBpmTimingTickCount = 0 * timingTickAccumulatorSize;
+estBpm = 0;
+estBpmSmooth = 0;
+estBpmSmoothFactor = 0.99;
+debug = 0;
+running = 1;
+wasRunning = 0;
+g_needsReset = 1;
+g_needsSendSPP = 0;
+g_needsUpdateStartPos = 1;
+g_startBar = 0;
+g_startBeat = 0;
+inChannel = -1;
+
+////////////////////////////////////////////////////////////////////////////////
+@slider
+
+g_needsUpdateStartPos = 1;
+newTimingTickAccumulatorSize = 30 * 2^(slider3+1);
+timingTickAccumulatorSize != newTimingTickAccumulatorSize ? 
+(
+  // force reset() to be called next block
+  g_needsReset = 1;
+  timingTickAccumulatorSize = newTimingTickAccumulatorSize;
+);
+
+
+////////////////////////////////////////////////////////////////////////////////
+@gfx 500 80
+
+function round(number) local(intPart, fracPart)
+(
+  intPart = floor(number);
+  fracPart = number - intPart;
+  fracPart < 0.5 ? 
+  (
+    intPart;
+  )
+  :
+  (
+    intPart + 1;
+  );
+);
+
+function getRoundedString(number, sigFigCount) local(intPart, fracPart, result)
+(
+  intPart = floor(number);
+  fracPart = round((number - intPart) * 10^sigFigCount);
+  result = #;
+  formatStr = #;
+  sprintf(formatStr, "%%i.%%0%ii", sigFigCount);
+  sprintf(result, formatStr, intPart, fracPart);
+  result;
+  //formatStr;
+); 
+
+
+gfx_x = 10;
+gfx_y = 10;
+gfx_set(1,1,1);
+result = #;
+running ? (
+  confidenceStr = #;
+  confidence = timingTickCount / timingTickAccumulatorSize;
+  sprintf(confidenceStr, "(sampling... %.1f%%)", confidence * 100);
+) : ( confidenceStr = "(sleeping! stale values!)" );
+sprintf(result, "estimated bpm: %s %s", getRoundedString(estBpm, 5), confidenceStr);
+gfx_drawstr(result);
+gfx_x = 10;
+gfx_y += 15;
+sprintf(result, "smoothed %s, smoothed smoothed %s", getRoundedString(estBpmSmooth, 5), getRoundedString(estBpmSmoothSmooth, 5)); 
+gfx_drawstr(result);
+
+gfx_x = 10;
+gfx_y += 15;
+i = 0;
+loop(20,
+  lastMessageStr = #;
+  sprintf(lastMessageStr, "%x/%x ", lastMessages[i*2+0], lastMessages[i*2+1]);
+  gfx_drawstr(lastMessageStr);
+  i += 1;
+  (i % 6) == 0 ? 
+  (
+    gfx_x = 10;
+    gfx_y += 15;
+  );
+);
+
+////////////////////////////////////////////////////////////////////////////////
+@block
+
+function insertMessage(msg1, note) local(i)
+(
+  i = 20;
+  loop(20,
+    lastMessages[i*2+0] = lastMessages[(i-1)*2+0];
+    lastMessages[i*2+1] = lastMessages[(i-1)*2+1];
+    i -= 1;
+  );
+  lastMessages[0] = msg1;
+  lastMessages[1] = note;
+);
+
+function reset()
+(
+  estBpm = 0;
+  estBpmSmooth = 0;
+  estBpmSmoothSmooth = 0;
+  timingTickCount = 0;
+  ttiAccumulator = 0;
+);
+
+function updateBpm(ttiMean) 
+(
+  ttiMean_Seconds = ttiMean/srate;
+  beatDuration = ttiMean_Seconds * SPPTicksPerBeat;
+  estBpm = 60/beatDuration; 
+  timingTickCount >= timingTickAccumulatorSize ? 
+  (
+    estBpmSmooth == 0 ?
+    (
+      estBpmSmooth = estBpm;
+      estBpmSmoothSmooth = estBpm;
+    )
+    :
+    (
+      estBpmSmooth = (estBpmSmoothFactor * estBpmSmooth) + estBpm * (1 - estBpmSmoothFactor);
+      estBpmSmoothSmooth = (estBpmSmoothFactor * estBpmSmoothSmooth) + estBpmSmooth * (1 - estBpmSmoothFactor);
+    );
+  );
+
+);
+
+function getStartTick()
+(
+  beatsPerBar = ts_num;
+  ticksPerBeat = 16/ts_denom;
+  
+  insertMessage(g_startBar, g_startBeat);
+  ticksPerBeat * (g_startBeat + (g_startBar * beatsPerBar));
+);
+
+function sendSPP(andStart) 
+(
+  startTick = getStartTick();
+  insertMessage(startTick, 0);
+  // SPP
+  sppLow = startTick % 128;
+  sppHigh = startTick / 128;
+  //insertMessage($x69, $x69);
+  //midisend(offset, $x90, 69, 127);
+  midisend(offset, statStop, 0);
+  midisend(offset, statSPP, sppLow, sppHigh);
+  midisend(offset, statStop, 0);
+  midisend(offset, statSPP, sppLow, sppHigh);
+  andStart ? (
+    midisend(offset, statContinue, 0);
+    //midisend(offset, statStart, 0);
+  );
+  insertMessage(sppLow, sppHigh);
+);
+
+g_needsReset ? 
+( 
+  reset();
+  g_needsReset = 0;
+);
+
+trigger != 0 ? (
+  slider1 = 1 + floor(beat_position/ts_num);
+  slider2 = 1 + floor(beat_position%ts_num);
+  sliderchange(slider1);
+  sliderchange(slider2);
+  g_needsUpdateStartPos = 1;
+  //sendSPP(0);
+);
+
+g_needsUpdateStartPos ? 
+( 
+  g_StartBar = slider1 - 1;
+  g_StartBeat = slider2 - 1;
+);
+
+running ? 
+(
+  !wasRunning ? 
+  (
+    reset();
+    wasRunning = 1;
+  );
+  prevTimingTickDelta += samplesBlock;
+)
+:
+(
+  wasRunning = 0;
+);
+
+g_needsSendSPP ? 
+(
+  sendSPP(0);
+  g_needsSendSPP = 0;
+);
+  
+  while
+  (
+    midirecv(offset,msg1,note,vel) ?
+    (
+      // Extract message type and channel
+      status = msg1 & $xF0;
+      channel = msg1 & $x0F;
+      // Is it on our channel?
+      channel == inChannel || inChannel == -1 ?
+      (
+      
+        // Is it a start message?
+        msg1 == statStart || msg1 == statContinue ?
+        (
+          reset();
+          sendSPP(1);
+        );
+        
+        msg1 == statStop ? 
+        (
+          // send only if playing or recording
+          play_state == 1 || play_state == 5 ? 
+          (
+            midisend(offset, statStop, 0);
+          );
+        );
+        
+        // Is it a clock message?
+        msg1 == statClock ? 
+        (
+          !debug || timingTickCount <= 1 ? 
+          (
+            thisTickInterval = prevTimingTickDelta + offset;
+            prevTimingTickDelta = -offset;
+            timingTickCount > 0 ?
+            (
+                ttiAccumulator += thisTickInterval;
+                ttiMean = ttiAccumulator / timingTickCount;
+                updateBpm(ttiMean);
+            );        
+            
+            timingTickCount < timingTickAccumulatorSize ? 
+            (
+              timingTickCount += 1;
+            )
+            :
+            (
+              // run forever
+              ttiAccumulator -= ttiMean;
+              //running = 0;
+              //sliderchange(slider2);
+            );
+          );
+          midisend(offset,statClock,0)
+        );
+        //: ( insertMessage(msg1, note); );
+  
+      ); 
+      
+      //midisend(offset,msg1,note,vel);
+      
+      1; // Force loop to continue until all messages have been processed
+  
+    );
+  
+  );
+  
+
