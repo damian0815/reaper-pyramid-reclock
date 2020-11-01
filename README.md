@@ -9,7 +9,7 @@ Reaper JSFX to insert SPP messages into a MIDI Realtime stream from Squarp Pyram
 
 ## The solution:
 
-(1) Use a JSFX input plugin to inject desired SPP messages into the MIDI Realtime message stream coming from Pyramid, send the modified stream out to a virtual loopback device and have Reaper listen for sync messages from that loopback device.
+(1) Use a JSFX input plugin to inject desired SPP messages into the MIDI Realtime message stream coming from Pyramid. Send this modified stream out to a virtual loopback device and have Reaper listen for sync messages from that loopback device.
 
 (2) Track the time intervals between MIDI Clock messages coming from Pyramid over a long period of time to get a highly accurate BPM that you can set in Reaper to mostly compensate for the difference in clock speeds.
 
