@@ -31,7 +31,7 @@ Surprisingly, it works.
 
 1. Copy `damian_MIDI_reclock` to (macOS) `~/Library/Application Support/REAPER/Effects/JSFX` (or wherever it should go on Windows).
 
-2. Setup a virtual MIDI loopback channel. On macOS you can do this with the built-in IAC driver in Audio MIDI Setup. I don’t know how to do this on Windows.
+2. Setup a virtual MIDI loopback channel (on the image below I have two channels, you only need one). On macOS you can do this with the built-in IAC driver in Audio MIDI Setup. I don’t know how to do this on Windows.
 
 ![IAC settings](https://github.com/damian0815/reaper-pyramid-reclock/raw/main/How-to/Audio%20MIDI%20Setup%20-%20IAC%20driver.png)
 
