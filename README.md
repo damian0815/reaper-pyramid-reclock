@@ -3,7 +3,7 @@ Reaper JSFX to insert SPP messages into a MIDI Realtime stream from Squarp Pyram
 
 ## The problem:
 
-(1) Pyramid does not send SPP - so if you have Reaper listening for Pyramid midi control messages, you can only ever record from the start of the project.
+(1) Pyramid does not send SPP - so if you have Reaper listening for Pyramid MIDI sync messages, you can only ever record from the start of the project.
 
 (2) Pyramid and Reaper’s beat clocks slowly drift apart, depending on various things including the temperature of the room you’re in. And because reaper basically ignores Pyramid's timing messages, if you record for more than a couple of bars your beats are going to start falling in wonky places relative to Reaper. This is because what Pyramid says is 120 BPM might be something like 120.04 BPM in Reaper - this is just the way clocks on computers work. That means the beats just will slowly drift out of sync with the REAPER bar lines. Maybe that’s a problem for you, maybe it’s not. For me, it's a problem.
 
@@ -19,7 +19,7 @@ Hold on to your shirts, this is hacky as hell. (Track numbers refer to template 
 
 * MIDI Realtime messages from Pyramid arrive in Reaper, on Track 1 (“midi ctl”).
 * JSFX input FX script on Track 1 listens to these messages and injects SPP messages to jump to a particular bar when START or CONTINUE message is received.
-* Output from Track 1 (which consists of the MIDI Realtime messages duplicated from the Pyramid along with additional SPP on start/continue) is sent to virtual midi loopback device (IAC b1)
+* Output from Track 1 (which consists of the MIDI Realtime messages duplicated from the Pyramid along with additional SPP on start/continue) is sent to virtual MIDI loopback device (IAC b1)
 * MIDI Realtime + SPP messages from IAC b1 arrive in Reaper, and Reaper uses them to sync.
 
 Surprisingly, it works.
