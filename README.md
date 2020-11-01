@@ -43,7 +43,7 @@ Surprisingly, it works.
 
 ![Reaper sync settings](https://github.com/damian0815/reaper-pyramid-reclock/raw/main/How-to/REAPER%20-%20sync%20settings.png)
 
-5. Open project-template.RPP. Press Stop on Pyramid.
+5. Open `project-template.RPP`. Press Stop on Pyramid.
 
 6. **THIS IS EXTREMELY IMPORTANT** - Press Pause in Reaper AND THEN press Record in Reaper. There will be no flashing “Waiting for sync” message. Press Play on Pyramid to make Reaper will start recording. **IF YOU ONLY PRESS RECORD IN REAPER WITHOUT PRESSING PAUSE FIRST YOU’LL GET THE FLASHING RED WINDOW BUT RECORDING WILL NOT START WHEN YOU PRESS PLAY ON PYRAMID**. I think I know why this is happening but it would be complicated to explain and I might be wrong.
 
