@@ -31,15 +31,15 @@ Surprisingly, it works.
 
 1. Copy `damian_MIDI_reclock` to (macOS) `~/Library/Application Support/REAPER/Effects/JSFX` (or wherever it should go on Windows).
 
-2. Setup a virtual MIDI loopback channel (on the image below I have two channels, you only need one). On macOS you can do this with the built-in IAC driver in Audio MIDI Setup. I don’t know how to do this on Windows.
+2. Setup a virtual MIDI loopback port (on the image below I have two port, you only need one). On macOS you can do this with the built-in IAC driver in Audio MIDI Setup. I don’t know how to do this on Windows.
 
 ![IAC settings](https://github.com/damian0815/reaper-pyramid-reclock/raw/main/How-to/Audio%20MIDI%20Setup%20-%20IAC%20driver.png)
 
-3. Set Reaper MIDI settings as shown - for the inputs, you want the loopback channel (IAC b1 for me) to say “Enabled+Control” and the Pyramid to say just “Enabled”, and for the outputs, you want the loopback channel to say “Enabled” (i don’t know if “\[low latency\]” is necessary but it can’t hurt)
+3. Set Reaper MIDI settings as shown - for the inputs, you want the loopback port (IAC b1 for me) to say “Enabled+Control” and the Pyramid to say just “Enabled”, and for the outputs, you want the loopback port to say “Enabled” (i don’t know if “\[low latency\]” is necessary but it can’t hurt)
 
 ![Reaper MIDI settings](https://github.com/damian0815/reaper-pyramid-reclock/raw/main/How-to/REAPER%20-%20MIDI%20settings.png)
 
-4. Set Reaper Sync settings as shown - you want “Enable synchronization to timecode”, “Playback”, “Recording”, and “Start playback on valid timecode when stopped” to all be checked, and “Use input” should be set to the virtual MIDI loopback channel you setup in step 2. Set “Freewheel on missing time code” to 1000 and “Synchronize by seeking ahead” to 100 - if you want to mess with these, just beware that if you set them to values that are too low, weird things can happen and you might have to restart Reaper and/or your computer.
+4. Set Reaper Sync settings as shown - you want “Enable synchronization to timecode”, “Playback”, “Recording”, and “Start playback on valid timecode when stopped” to all be checked, and “Use input” should be set to the virtual MIDI loopback port you setup in step 2. Set “Freewheel on missing time code” to 1000 and “Synchronize by seeking ahead” to 100 - if you want to mess with these, just beware that if you set them to values that are too low, weird things can happen and you might have to restart Reaper and/or your computer.
 
 ![Reaper sync settings](https://github.com/damian0815/reaper-pyramid-reclock/raw/main/How-to/REAPER%20-%20sync%20settings.png)
 
